@@ -25,32 +25,26 @@ function SceneLoader() {
 
 /**
  * Lighting setup for the scene
- * Three-point lighting: ambient fill + directional key + point fill
+ * Minimal ambient lighting - grid lines are primary light source
+ * Grid lines provide warm white ~4000K glow via GridLines component
  */
 function Lighting() {
   return (
     <>
-      {/* Ambient light - soft fill */}
-      <ambientLight intensity={0.4} />
+      {/* Very subtle ambient light - just enough to see dark areas */}
+      <ambientLight intensity={0.15} />
 
-      {/* Key light - main directional light from top-right */}
+      {/* Subtle directional key light for piece highlights */}
       <directionalLight
         position={[10, 15, 10]}
-        intensity={0.8}
+        intensity={0.3}
         castShadow={false}
       />
 
-      {/* Fill light - softer point light from opposite side */}
-      <pointLight
-        position={[-8, 5, -8]}
-        intensity={0.3}
-        color="#ffffff"
-      />
-
-      {/* Rim light - subtle back light for depth */}
+      {/* Subtle rim light for depth */}
       <pointLight
         position={[0, -10, 5]}
-        intensity={0.2}
+        intensity={0.1}
         color={COLORS.cyan}
       />
     </>

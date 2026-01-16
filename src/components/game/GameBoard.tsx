@@ -7,9 +7,10 @@
  */
 
 import { useCallback } from 'react';
-import { useGameStore, selectBoard, selectWinningLine, selectCanInteract } from '@/stores/gameStore';
+import { useGameStore, selectBoard, selectWinningLine, selectCanInteract, selectCurrentPlayer } from '@/stores/gameStore';
 import { CELL_POSITIONS } from '@/lib/constants';
 import { GridCell } from './GridCell';
+import { GridLines } from './GridLines';
 import { XPiece } from './XPiece';
 import { OPiece } from './OPiece';
 import { WinLine } from './WinLine';
@@ -23,6 +24,7 @@ export function GameBoard() {
   const board = useGameStore(selectBoard);
   const winningLine = useGameStore(selectWinningLine);
   const canInteract = useGameStore(selectCanInteract);
+  const currentPlayer = useGameStore(selectCurrentPlayer);
   const makeMove = useGameStore((state) => state.makeMove);
 
   // Handle cell click
@@ -43,6 +45,9 @@ export function GameBoard() {
 
   return (
     <group>
+      {/* Glowing grid separator lines */}
+      <GridLines />
+
       {/* Render all 27 cells and pieces */}
       {CELL_POSITIONS.map((position, index) => {
         const cellState = board[index];
@@ -57,6 +62,7 @@ export function GameBoard() {
               index={index}
               isEmpty={isEmpty}
               isInteractive={canInteract}
+              currentPlayer={currentPlayer}
               onClick={handleCellClick}
             />
 

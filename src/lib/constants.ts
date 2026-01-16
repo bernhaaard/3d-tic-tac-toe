@@ -152,8 +152,8 @@ export const ANIMATION_CONFIG = {
   // Hover effects
   hoverDuration: 150,
   hoverScale: 1.1,
-  hoverOpacity: 0.2,
-  defaultOpacity: 0.05,
+  hoverOpacity: 0.4,     // Increased from 0.2 for better visibility
+  defaultOpacity: 0.2,   // Increased from 0.05 for better visibility
 
   // Win line
   winLineDelay: 200,
@@ -217,6 +217,9 @@ export const COLORS = {
   background: '#1a1a2e',
   surface: '#16213e',
   grid: '#4B5563',
+  // Warm white ~4000K color temperature for grid lines
+  warmWhite: '#FFECD2',
+  warmWhiteGlow: '#FFE4C4',
 } as const;
 
 // ============================================================================
