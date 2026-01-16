@@ -31,32 +31,34 @@ export function MainMenu() {
 
   return (
     <div className="pointer-events-auto h-full grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center px-8 py-12">
-      {/* Left column - Title and info */}
+      {/* Left column - Title and info with dark backdrop for readability */}
       <div className="flex flex-col items-center lg:items-start justify-center lg:pl-8 order-1 lg:order-1">
-        <h1
-          className="mb-3 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white text-center lg:text-left"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          3D Tic-Tac-Toe
-        </h1>
+        <div className="bg-[var(--color-background)]/90 backdrop-blur-sm rounded-xl p-6 lg:p-8">
+          <h1
+            className="mb-3 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white text-center lg:text-left"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            3D Tic-Tac-Toe
+          </h1>
 
-        <p className="mb-6 text-base sm:text-lg text-[var(--color-text-muted)] text-center lg:text-left">
-          A 3×3×3 cubic challenge
-        </p>
+          <p className="mb-4 text-base sm:text-lg text-[var(--color-text-muted)] text-center lg:text-left">
+            A 3×3×3 cubic challenge
+          </p>
 
-        {/* Instructions - hidden on mobile, shown on larger screens */}
-        <div className="hidden lg:flex flex-col gap-3 text-sm text-[var(--color-text-muted)] mt-4">
-          <div className="flex items-center gap-2">
-            <Gamepad2 className="h-4 w-4 text-[var(--color-cyan)]" />
-            <span>Drag to rotate the grid</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="h-4 w-4 flex items-center justify-center text-[var(--color-cyan)]">⊕</span>
-            <span>Click cells to place your symbol</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="h-4 w-4 flex items-center justify-center text-[var(--color-cyan)]">🏆</span>
-            <span>Get 3 in a row to win!</span>
+          {/* Instructions - hidden on mobile, shown on larger screens */}
+          <div className="hidden lg:flex flex-col gap-3 text-sm text-[var(--color-text-muted)] mt-4">
+            <div className="flex items-center gap-2">
+              <Gamepad2 className="h-4 w-4 text-[var(--color-cyan)]" />
+              <span>Drag to rotate the grid</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-4 w-4 flex items-center justify-center text-[var(--color-cyan)]">⊕</span>
+              <span>Click cells to place your symbol</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-4 w-4 flex items-center justify-center text-[var(--color-cyan)]">🏆</span>
+              <span>Get 3 in a row to win!</span>
+            </div>
           </div>
         </div>
       </div>

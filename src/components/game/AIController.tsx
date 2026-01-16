@@ -18,6 +18,15 @@ import { useAI } from '@/hooks/useAI';
 export function AIController() {
   const { getAIMove } = useAI();
   const isProcessingRef = useRef(false);
+  const isMountedRef = useRef(true);
+
+  // Track component mount state for cleanup during hot reload
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Get all necessary state from store
   const board = useGameStore((state) => state.board);
@@ -47,9 +56,6 @@ export function AIController() {
       return;
     }
 
-    // Track if this effect is still mounted (for cleanup during hot reload)
-    let isMounted = true;
-
     // Mark as processing to prevent duplicate calls
     isProcessingRef.current = true;
 
@@ -60,7 +66,7 @@ export function AIController() {
     getAIMove(board, aiPlayer, aiDifficulty)
       .then((move) => {
         // Ignore if component unmounted (hot reload or navigation)
-        if (!isMounted) return;
+        if (!isMountedRef.current) return;
 
         // Clear thinking state BEFORE making the move
         // (The store rejects moves while isAIThinking is true)
@@ -70,7 +76,7 @@ export function AIController() {
       })
       .catch((error) => {
         // Ignore if component unmounted
-        if (!isMounted) return;
+        if (!isMountedRef.current) return;
 
         console.error('AI move error:', error);
         setAIThinking(false);
@@ -78,11 +84,6 @@ export function AIController() {
       .finally(() => {
         isProcessingRef.current = false;
       });
-
-    // Cleanup function for hot reload safety
-    return () => {
-      isMounted = false;
-    };
   }, [
     isAITurn,
     board,
