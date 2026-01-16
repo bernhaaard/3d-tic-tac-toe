@@ -15,8 +15,10 @@ import {
   CELL_SIZE,
   COLORS,
   ANIMATION_CONFIG,
+  PIECE_GEOMETRY,
   TOTAL_CELLS,
 } from '@/lib/constants';
+import { useAudio } from '@/hooks/useAudio';
 import type { CellState, Player } from '@/types/game';
 
 interface CellSelectorProps {
@@ -25,10 +27,6 @@ interface CellSelectorProps {
   currentPlayer: Player;
   onCellClick: (index: number) => void;
 }
-
-// Pre-create color objects (reused across renders)
-const cyanColor = new THREE.Color(COLORS.cyan);
-const magentaColor = new THREE.Color(COLORS.magenta);
 
 // Pre-allocate reusable vectors to avoid GC pressure in render loop
 // These are module-level singletons - safe because useFrame is single-threaded
@@ -77,19 +75,73 @@ function findClosestCell(
 }
 
 /**
- * Ghost preview shown at hovered cell
+ * Ghost X preview shown at hovered cell
  */
-function GhostPreview({
+function GhostXPreview({
   position,
-  color,
   visible,
 }: {
   position: [number, number, number];
-  color: THREE.Color;
+  visible: boolean;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+  const materialsRef = useRef<THREE.MeshStandardMaterial[]>([]);
+
+  const { cylinderRadius, cylinderLength, segments, rotationAngle } = PIECE_GEOMETRY.x;
+  const color = new THREE.Color(COLORS.cyan);
+
+  useFrame(() => {
+    const targetOpacity = visible ? ANIMATION_CONFIG.hoverOpacity : 0;
+    for (const mat of materialsRef.current) {
+      mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, 0.2);
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={position} scale={0.8}>
+      <mesh rotation={[0, 0, rotationAngle]}>
+        <cylinderGeometry args={[cylinderRadius, cylinderRadius, cylinderLength, segments]} />
+        <meshStandardMaterial
+          ref={(mat) => { if (mat) materialsRef.current[0] = mat; }}
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.2}
+          transparent
+          opacity={0}
+          depthWrite={false}
+        />
+      </mesh>
+      <mesh rotation={[0, 0, -rotationAngle]}>
+        <cylinderGeometry args={[cylinderRadius, cylinderRadius, cylinderLength, segments]} />
+        <meshStandardMaterial
+          ref={(mat) => { if (mat) materialsRef.current[1] = mat; }}
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.2}
+          transparent
+          opacity={0}
+          depthWrite={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/**
+ * Ghost O preview shown at hovered cell
+ */
+function GhostOPreview({
+  position,
+  visible,
+}: {
+  position: [number, number, number];
   visible: boolean;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial | null>(null);
+
+  const { torusRadius, tubeRadius, radialSegments, tubularSegments } = PIECE_GEOMETRY.o;
+  const color = new THREE.Color(COLORS.magenta);
 
   useFrame(() => {
     if (!materialRef.current) return;
@@ -101,27 +153,15 @@ function GhostPreview({
     );
   });
 
-  // Store material ref when mesh is ready
   useEffect(() => {
     if (meshRef.current) {
       materialRef.current = meshRef.current.material as THREE.MeshStandardMaterial;
     }
   }, []);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    const mesh = meshRef.current;
-    return () => {
-      if (mesh) {
-        mesh.geometry?.dispose();
-        (mesh.material as THREE.Material)?.dispose();
-      }
-    };
-  }, []);
-
   return (
-    <mesh ref={meshRef} position={position}>
-      <boxGeometry args={[CELL_SIZE * 0.7, CELL_SIZE * 0.7, CELL_SIZE * 0.7]} />
+    <mesh ref={meshRef} position={position} rotation={[Math.PI / 2, 0, 0]} scale={0.8}>
+      <torusGeometry args={[torusRadius, tubeRadius, radialSegments, tubularSegments]} />
       <meshStandardMaterial
         color={color}
         emissive={color}
@@ -145,13 +185,9 @@ export function CellSelector({
   onCellClick,
 }: CellSelectorProps) {
   const [hoveredCell, setHoveredCell] = useState<number | null>(null);
+  const prevHoveredCell = useRef<number | null>(null);
   const { raycaster, camera, pointer } = useThree();
-
-  // Player color
-  const playerColor = useMemo(
-    () => (currentPlayer === 'X' ? cyanColor : magentaColor),
-    [currentPlayer]
-  );
+  const { playSound } = useAudio();
 
   // Calculate bounding box that contains all cells
   const boundingBox = useMemo(() => {
@@ -244,6 +280,11 @@ export function CellSelector({
       }
     }
 
+    // Play hover sound when hovering a new cell
+    if (bestCell !== prevHoveredCell.current && bestCell !== null) {
+      playSound('hover');
+    }
+    prevHoveredCell.current = bestCell;
     setHoveredCell(bestCell);
   });
 
@@ -252,10 +293,11 @@ export function CellSelector({
     (e: ThreeEvent<MouseEvent>) => {
       e.stopPropagation();
       if (hoveredCell !== null && isInteractive) {
+        playSound('place');
         onCellClick(hoveredCell);
       }
     },
-    [hoveredCell, isInteractive, onCellClick]
+    [hoveredCell, isInteractive, onCellClick, playSound]
   );
 
   // Get hovered cell position
@@ -282,12 +324,18 @@ export function CellSelector({
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
 
-      {/* Ghost preview at hovered cell */}
-      <GhostPreview
-        position={hoveredPosition}
-        color={playerColor}
-        visible={hoveredCell !== null}
-      />
+      {/* Ghost preview at hovered cell - shows actual symbol */}
+      {currentPlayer === 'X' ? (
+        <GhostXPreview
+          position={hoveredPosition}
+          visible={hoveredCell !== null}
+        />
+      ) : (
+        <GhostOPreview
+          position={hoveredPosition}
+          visible={hoveredCell !== null}
+        />
+      )}
     </group>
   );
 }

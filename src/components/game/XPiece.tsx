@@ -3,11 +3,13 @@
 /**
  * X piece 3D geometry component
  * Two crossed cylinders forming an X shape
+ * Always faces the camera (billboard effect)
  * @module components/game/XPiece
  */
 
 import { useRef } from 'react';
 import { useSpring, animated } from '@react-spring/three';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { PIECE_GEOMETRY, COLORS, MATERIAL_CONFIG, ANIMATION_CONFIG } from '@/lib/constants';
 
@@ -16,12 +18,17 @@ interface XPieceProps {
   isWinning?: boolean;
 }
 
+// Reusable vector for lookAt calculation
+const tempLookAt = new THREE.Vector3();
+
 /**
  * Animated X piece component
  * Appears with spring animation when placed
+ * Always faces the camera (billboard effect)
  */
 export function XPiece({ position, isWinning = false }: XPieceProps) {
   const groupRef = useRef<THREE.Group>(null);
+  const { camera } = useThree();
 
   // Spring animation for piece appearance
   const { scale, opacity } = useSpring({
@@ -38,6 +45,14 @@ export function XPiece({ position, isWinning = false }: XPieceProps) {
     },
     loop: isWinning ? { reverse: true } : false,
     config: { duration: ANIMATION_CONFIG.winPulseDuration / 2 },
+  });
+
+  // Billboard effect - make piece face camera
+  useFrame(() => {
+    if (!groupRef.current) return;
+    // Get camera position and make the piece look at it
+    tempLookAt.copy(camera.position);
+    groupRef.current.lookAt(tempLookAt);
   });
 
   const { cylinderRadius, cylinderLength, segments, rotationAngle } = PIECE_GEOMETRY.x;

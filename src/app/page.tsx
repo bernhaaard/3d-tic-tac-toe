@@ -7,6 +7,7 @@
 
 import dynamic from 'next/dynamic';
 import { UIOverlay } from '@/components/ui';
+import { SoundController } from '@/components/game/SoundController';
 
 // Dynamic import for Scene to prevent SSR issues with Three.js
 const Scene = dynamic(
@@ -27,6 +28,9 @@ const Scene = dynamic(
 export default function Home() {
   return (
     <main className="relative h-screen w-screen overflow-hidden">
+      {/* Sound controller for win/draw sounds */}
+      <SoundController />
+
       {/* 3D Scene (full screen) */}
       <div className="absolute inset-0">
         <Scene />

@@ -3,11 +3,13 @@
 /**
  * O piece 3D geometry component
  * Torus (donut shape) forming an O
+ * Always faces the camera (billboard effect)
  * @module components/game/OPiece
  */
 
 import { useRef } from 'react';
 import { useSpring, animated } from '@react-spring/three';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { PIECE_GEOMETRY, COLORS, MATERIAL_CONFIG, ANIMATION_CONFIG } from '@/lib/constants';
 
@@ -16,12 +18,17 @@ interface OPieceProps {
   isWinning?: boolean;
 }
 
+// Reusable vector for lookAt calculation
+const tempLookAt = new THREE.Vector3();
+
 /**
  * Animated O piece component
  * Appears with spring animation when placed
+ * Always faces the camera (billboard effect)
  */
 export function OPiece({ position, isWinning = false }: OPieceProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const { camera } = useThree();
 
   // Spring animation for piece appearance
   const { scale, opacity } = useSpring({
@@ -40,27 +47,36 @@ export function OPiece({ position, isWinning = false }: OPieceProps) {
     config: { duration: ANIMATION_CONFIG.winPulseDuration / 2 },
   });
 
+  // Billboard effect - make piece face camera
+  useFrame(() => {
+    if (!groupRef.current) return;
+    // Get camera position and make the piece look at it
+    tempLookAt.copy(camera.position);
+    groupRef.current.lookAt(tempLookAt);
+  });
+
   const { torusRadius, tubeRadius, radialSegments, tubularSegments } = PIECE_GEOMETRY.o;
 
   return (
-    <animated.mesh
-      ref={meshRef}
+    <animated.group
+      ref={groupRef}
       position={position}
       scale={scale}
-      rotation={[Math.PI / 2, 0, 0]} // Rotate to face forward
     >
-      <torusGeometry args={[torusRadius, tubeRadius, radialSegments, tubularSegments]} />
-      <animated.meshStandardMaterial
-        color={COLORS.magenta}
-        metalness={MATERIAL_CONFIG.piece.metalness}
-        roughness={MATERIAL_CONFIG.piece.roughness}
-        emissive={COLORS.magenta}
-        emissiveIntensity={emissiveIntensity}
-        transparent
-        opacity={opacity}
-        toneMapped={false}
-      />
-    </animated.mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[torusRadius, tubeRadius, radialSegments, tubularSegments]} />
+        <animated.meshStandardMaterial
+          color={COLORS.magenta}
+          metalness={MATERIAL_CONFIG.piece.metalness}
+          roughness={MATERIAL_CONFIG.piece.roughness}
+          emissive={COLORS.magenta}
+          emissiveIntensity={emissiveIntensity}
+          transparent
+          opacity={opacity}
+          toneMapped={false}
+        />
+      </mesh>
+    </animated.group>
   );
 }
 
