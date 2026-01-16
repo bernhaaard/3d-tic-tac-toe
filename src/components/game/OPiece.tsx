@@ -63,8 +63,8 @@ export function OPiece({ position, isWinning = false }: OPieceProps) {
       position={position}
       scale={scale}
     >
-      {/* Mesh rotated on X to stand upright like a coin, group rotates on Y to face camera */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
+      {/* Torus in default XY plane (vertical), group rotates on Y to face camera */}
+      <mesh>
         <torusGeometry args={[torusRadius, tubeRadius, radialSegments, tubularSegments]} />
         <animated.meshStandardMaterial
           color={COLORS.magenta}

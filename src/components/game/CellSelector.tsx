@@ -178,9 +178,8 @@ function GhostOPreview({
 
   return (
     <group ref={groupRef} position={position} scale={0.8}>
-      {/* Mesh rotated on X to stand upright like a coin, group rotates on Y to face camera */}
+      {/* Torus in default XY plane (vertical), group rotates on Y to face camera */}
       <mesh
-        rotation={[Math.PI / 2, 0, 0]}
         ref={(mesh) => {
           if (mesh) {
             materialRef.current = mesh.material as THREE.MeshStandardMaterial;
