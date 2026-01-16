@@ -6,7 +6,7 @@
  * @module components/game/WinLine
  */
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
@@ -19,10 +19,11 @@ interface WinLineProps {
 
 /**
  * Animated winning line component
- * Draws a glowing line between winning cells
+ * Draws a glowing line between winning cells with pulsing animation
  */
 export function WinLine({ startIndex, endIndex }: WinLineProps) {
-  const opacityRef = useRef(0.8);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lineRef = useRef<any>(null);
 
   // Get start and end positions
   const startPos = CELL_POSITIONS[startIndex];
@@ -39,11 +40,24 @@ export function WinLine({ startIndex, endIndex }: WinLineProps) {
     ];
   }, [startPos, endPos]);
 
-  // Pulsing animation - update the opacity ref
+  // Pulsing animation - update the material opacity directly
   useFrame(({ clock }) => {
-    const pulse = Math.sin(clock.getElapsedTime() * 3) * 0.3 + 0.7;
-    opacityRef.current = pulse;
+    if (lineRef.current && lineRef.current.material) {
+      const pulse = Math.sin(clock.getElapsedTime() * 3) * 0.3 + 0.7;
+      lineRef.current.material.opacity = pulse;
+    }
   });
+
+  // Cleanup on unmount
+  useEffect(() => {
+    const line = lineRef.current;
+    return () => {
+      if (line) {
+        line.geometry?.dispose();
+        line.material?.dispose();
+      }
+    };
+  }, []);
 
   if (!startPos || !endPos || points.length === 0) {
     return null;
@@ -51,6 +65,7 @@ export function WinLine({ startIndex, endIndex }: WinLineProps) {
 
   return (
     <Line
+      ref={lineRef}
       points={points}
       color={COLORS.cyan}
       lineWidth={4}

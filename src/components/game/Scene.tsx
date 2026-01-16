@@ -6,7 +6,7 @@
  */
 
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { Suspense } from 'react';
 import { CAMERA_CONFIG, ORBIT_CONTROLS_CONFIG, COLORS } from '@/lib/constants';
 import { GameBoard } from './GameBoard';

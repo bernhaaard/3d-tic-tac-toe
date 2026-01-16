@@ -2,14 +2,15 @@
 
 /**
  * Interactive grid cell component
- * Handles hover effects with player-based color tinting
+ * Only renders for empty, interactive cells to prevent blocking inner cells
+ * Shows ghost preview on hover
  * @module components/game/GridCell
  */
 
 import { useRef, useState, useCallback, useMemo } from 'react';
 import { useFrame, ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
-import { CELL_SIZE, COLORS, MATERIAL_CONFIG, ANIMATION_CONFIG } from '@/lib/constants';
+import { CELL_SIZE, COLORS, ANIMATION_CONFIG } from '@/lib/constants';
 import type { Player } from '@/types/game';
 
 interface GridCellProps {
@@ -21,13 +22,15 @@ interface GridCellProps {
   onClick: (index: number) => void;
 }
 
-// Pre-create color objects for lerping
-const baseColor = new THREE.Color(COLORS.grid);
+// Pre-create color objects
 const cyanColor = new THREE.Color(COLORS.cyan);
 const magentaColor = new THREE.Color(COLORS.magenta);
 
 /**
- * Interactive grid cell with hover effects and player color tinting
+ * Interactive grid cell
+ * - Only rendered for empty cells (non-empty cells are just pieces)
+ * - Shows colored ghost preview on hover
+ * - Smaller hit box allows clicking through gaps to inner cells
  */
 export function GridCell({
   position,
@@ -40,88 +43,62 @@ export function GridCell({
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
-  // Calculate whether cell should respond to interactions
   const canInteract = isEmpty && isInteractive;
 
-  // Get target color based on current player
-  const targetPlayerColor = useMemo(
+  // Get player color for hover preview
+  const playerColor = useMemo(
     () => (currentPlayer === 'X' ? cyanColor : magentaColor),
     [currentPlayer]
   );
 
-  // Smooth hover animation using useFrame
+  // Animate opacity on hover
   useFrame(() => {
     if (!meshRef.current) return;
 
     const material = meshRef.current.material as THREE.MeshStandardMaterial;
 
-    // Target opacity based on hover state
-    const targetOpacity = canInteract && hovered
-      ? ANIMATION_CONFIG.hoverOpacity
-      : ANIMATION_CONFIG.defaultOpacity;
+    // Show ghost preview when hovered
+    const targetOpacity = hovered ? ANIMATION_CONFIG.hoverOpacity : 0;
+    material.opacity = THREE.MathUtils.lerp(material.opacity, targetOpacity, 0.2);
 
-    // Lerp opacity for smooth transition
-    material.opacity = THREE.MathUtils.lerp(
-      material.opacity,
-      targetOpacity,
-      0.1
-    );
-
-    // Lerp color towards player color on hover (subtle hue shift + saturation bump)
-    if (canInteract && hovered) {
-      // Mix base color with player color (30% player color for subtle tint)
-      const mixedColor = baseColor.clone().lerp(targetPlayerColor, 0.3);
-      // Increase saturation slightly
-      const hsl = { h: 0, s: 0, l: 0 };
-      mixedColor.getHSL(hsl);
-      mixedColor.setHSL(hsl.h, Math.min(hsl.s * 1.5, 1), hsl.l);
-      material.color.lerp(mixedColor, 0.15);
-    } else {
-      // Return to base color
-      material.color.lerp(baseColor, 0.1);
+    // Update color to match current player
+    if (hovered) {
+      material.color.lerp(playerColor, 0.3);
+      material.emissive.lerp(playerColor, 0.2);
     }
-
-    // Target scale based on hover state
-    const targetScale = canInteract && hovered ? ANIMATION_CONFIG.hoverScale : 1;
-
-    meshRef.current.scale.lerp(
-      new THREE.Vector3(targetScale, targetScale, targetScale),
-      0.1
-    );
   });
 
-  // Handle pointer over
   const handlePointerOver = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
-      if (canInteract) {
-        setHovered(true);
-        document.body.style.cursor = 'pointer';
-      }
-    },
-    [canInteract]
-  );
-
-  // Handle pointer out
-  const handlePointerOut = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      e.stopPropagation();
-      setHovered(false);
-      document.body.style.cursor = 'default';
+      setHovered(true);
+      document.body.style.cursor = 'pointer';
     },
     []
   );
 
-  // Handle click
+  const handlePointerOut = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    setHovered(false);
+    document.body.style.cursor = 'default';
+  }, []);
+
   const handleClick = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
       e.stopPropagation();
-      if (canInteract) {
-        onClick(index);
-      }
+      onClick(index);
     },
-    [canInteract, onClick, index]
+    [onClick, index]
   );
+
+  // DON'T render mesh for non-interactive cells
+  // This prevents blocking clicks to inner cells
+  if (!canInteract) {
+    return null;
+  }
+
+  // Use a smaller hit box to allow clicking through gaps
+  const hitBoxSize = CELL_SIZE * 0.75;
 
   return (
     <mesh
@@ -131,13 +108,13 @@ export function GridCell({
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
     >
-      <boxGeometry args={[CELL_SIZE, CELL_SIZE, CELL_SIZE]} />
+      <boxGeometry args={[hitBoxSize, hitBoxSize, hitBoxSize]} />
       <meshStandardMaterial
-        color={COLORS.grid}
-        metalness={MATERIAL_CONFIG.grid.metalness}
-        roughness={MATERIAL_CONFIG.grid.roughness}
+        color={playerColor}
+        emissive={playerColor}
+        emissiveIntensity={0.1}
         transparent
-        opacity={ANIMATION_CONFIG.defaultOpacity}
+        opacity={0}
         depthWrite={false}
       />
     </mesh>

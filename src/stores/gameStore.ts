@@ -8,7 +8,6 @@
 import { create } from 'zustand';
 import type {
   CellState,
-  Difficulty,
   GameActions,
   GameMode,
   GamePhase,

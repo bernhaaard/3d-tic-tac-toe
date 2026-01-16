@@ -56,6 +56,9 @@ export function AIController() {
     // Request AI move
     getAIMove(board, aiPlayer, aiDifficulty)
       .then((move) => {
+        // Clear thinking state BEFORE making the move
+        // (The store rejects moves while isAIThinking is true)
+        setAIThinking(false);
         // Make the move
         makeMove(move);
       })

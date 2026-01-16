@@ -2,117 +2,59 @@
 
 /**
  * React hook for AI opponent functionality
- * Manages Web Worker lifecycle and AI move requests
+ * Uses direct computation (no web worker for simplicity and reliability)
  * @module hooks/useAI
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import type { CellState, Difficulty, Player } from '@/types/game';
-import type { AIWorkerRequest, AIWorkerResponse } from '@/workers/aiWorker';
-
-// ============================================================================
-// HOOK INTERFACE
-// ============================================================================
-
-interface UseAIReturn {
-  /** Request AI to calculate and return best move */
-  getAIMove: (
-    board: CellState[],
-    aiPlayer: Player,
-    difficulty: Difficulty
-  ) => Promise<number>;
-  /** Check if AI worker is ready */
-  isReady: boolean;
-}
-
-// ============================================================================
-// HOOK IMPLEMENTATION
-// ============================================================================
+import { getBestMove, getThinkDelay } from '@/lib/aiEngine';
 
 /**
  * Hook for AI opponent functionality
- * Creates a Web Worker for non-blocking AI computation
+ * Computes AI moves with artificial delay for UX
  */
-export function useAI(): UseAIReturn {
-  const workerRef = useRef<Worker | null>(null);
-  const isReadyRef = useRef(false);
+export function useAI() {
+  const isComputingRef = useRef(false);
 
-  // Initialize worker on mount
-  useEffect(() => {
-    // Create worker using dynamic import URL pattern
-    // This works with Next.js webpack configuration
-    workerRef.current = new Worker(
-      new URL('../workers/aiWorker.ts', import.meta.url)
-    );
-    isReadyRef.current = true;
-
-    // Cleanup on unmount
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-        isReadyRef.current = false;
-      }
-    };
-  }, []);
-
-  // Function to request AI move
   const getAIMove = useCallback(
-    (
+    async (
       board: CellState[],
       aiPlayer: Player,
       difficulty: Difficulty
     ): Promise<number> => {
-      return new Promise((resolve, reject) => {
-        if (!workerRef.current) {
-          // Fallback: if worker isn't ready, import and run directly
-          import('@/lib/aiEngine').then(({ getBestMove }) => {
-            const move = getBestMove(board, aiPlayer, difficulty);
-            resolve(move);
-          }).catch(reject);
-          return;
+      // Prevent concurrent calls
+      if (isComputingRef.current) {
+        throw new Error('AI is already computing');
+      }
+
+      isComputingRef.current = true;
+
+      try {
+        const startTime = performance.now();
+
+        // Calculate the best move
+        const move = getBestMove(board, aiPlayer, difficulty);
+
+        const elapsed = performance.now() - startTime;
+
+        // Add artificial delay for more natural UX
+        const targetDelay = getThinkDelay(difficulty);
+        const additionalDelay = Math.max(0, targetDelay - elapsed);
+
+        if (additionalDelay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, additionalDelay));
         }
 
-        // Handler for worker response
-        const handleMessage = (event: MessageEvent<AIWorkerResponse>) => {
-          if (event.data.type === 'moveCalculated') {
-            workerRef.current?.removeEventListener('message', handleMessage);
-            resolve(event.data.move);
-          }
-        };
-
-        // Handler for worker error
-        const handleError = (error: ErrorEvent) => {
-          workerRef.current?.removeEventListener('error', handleError);
-          console.error('AI Worker error:', error);
-          // Fallback to synchronous calculation
-          import('@/lib/aiEngine').then(({ getBestMove }) => {
-            const move = getBestMove(board, aiPlayer, difficulty);
-            resolve(move);
-          }).catch(reject);
-        };
-
-        // Add event listeners
-        workerRef.current.addEventListener('message', handleMessage);
-        workerRef.current.addEventListener('error', handleError);
-
-        // Send request to worker
-        const request: AIWorkerRequest = {
-          type: 'calculateMove',
-          board,
-          aiPlayer,
-          difficulty,
-        };
-        workerRef.current.postMessage(request);
-      });
+        return move;
+      } finally {
+        isComputingRef.current = false;
+      }
     },
     []
   );
 
-  return {
-    getAIMove,
-    isReady: isReadyRef.current,
-  };
+  return { getAIMove };
 }
 
 export default useAI;

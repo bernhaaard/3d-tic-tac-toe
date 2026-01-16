@@ -29,23 +29,23 @@ export interface AIConfig {
 
 const DIFFICULTY_CONFIG: Record<Difficulty, AIConfig> = {
   easy: {
-    maxDepth: 2,
+    maxDepth: 1,
     errorRate: 0.7,   // 70% chance of random move
     useOpeningBook: false,
   },
   medium: {
-    maxDepth: 4,
+    maxDepth: 2,
     errorRate: 0.2,   // 20% chance of suboptimal move
     useOpeningBook: true,
   },
   hard: {
-    maxDepth: 6,
+    maxDepth: 3,
     errorRate: 0.05,  // 5% chance of error
     useOpeningBook: true,
   },
   impossible: {
-    maxDepth: 12,     // Effectively unlimited for 3D TTT
-    errorRate: 0,     // Perfect play
+    maxDepth: 4,      // Limited depth for responsive play
+    errorRate: 0,     // Perfect play within depth limit
     useOpeningBook: true,
   },
 };
@@ -75,9 +75,9 @@ const POSITION_VALUES: Record<number, number> = {
 // ============================================================================
 
 const THINK_TIMES: Record<Difficulty, [number, number]> = {
-  easy: [300, 600],
-  medium: [400, 800],
-  hard: [500, 1000],
+  easy: [200, 400],
+  medium: [300, 500],
+  hard: [400, 700],
   impossible: [500, 1500],
 };
 
@@ -151,12 +151,10 @@ function evaluateBoard(board: CellState[], aiPlayer: Player): number {
 
     let aiCount = 0;
     let oppCount = 0;
-    let emptyCount = 0;
 
     for (const cell of [cellA, cellB, cellC]) {
       if (cell === aiPlayer) aiCount++;
       else if (cell === opponent) oppCount++;
-      else emptyCount++;
     }
 
     // Evaluate line potential
