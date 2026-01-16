@@ -27,13 +27,13 @@ export function AIController() {
   const isAIThinking = useGameStore((state) => state.isAIThinking);
   const winner = useGameStore((state) => state.winner);
   const aiDifficulty = useGameStore((state) => state.settings.aiDifficulty);
-  const firstPlayer = useGameStore((state) => state.settings.firstPlayer);
+  const humanPlayer = useGameStore((state) => state.settings.humanPlayer);
   const makeMove = useGameStore((state) => state.makeMove);
   const setAIThinking = useGameStore((state) => state.setAIThinking);
 
   // Determine if it's AI's turn
-  // AI always plays as 'O' if human is 'X' (firstPlayer), or 'X' if human is 'O'
-  const aiPlayer = firstPlayer === 'X' ? 'O' : 'X';
+  // AI always plays the opposite symbol of what human chose
+  const aiPlayer = humanPlayer === 'X' ? 'O' : 'X';
   const isAITurn =
     gameMode === 'ai' &&
     phase === 'playing' &&
@@ -74,6 +74,7 @@ export function AIController() {
     board,
     aiPlayer,
     aiDifficulty,
+    humanPlayer,
     getAIMove,
     makeMove,
     setAIThinking,

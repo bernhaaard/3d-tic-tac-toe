@@ -2,7 +2,7 @@
 
 /**
  * Settings panel component
- * Sound, AI difficulty, and first player settings
+ * Sound, AI difficulty, player symbol, and turn order settings
  * @module components/ui/Settings
  */
 
@@ -30,12 +30,16 @@ export function Settings() {
     [updateSettings]
   );
 
-  const handleFirstPlayerChange = useCallback(
+  const handleHumanPlayerChange = useCallback(
     (player: Player) => {
-      updateSettings({ firstPlayer: player });
+      updateSettings({ humanPlayer: player });
     },
     [updateSettings]
   );
+
+  const handleAIMovesFirstToggle = useCallback(() => {
+    updateSettings({ aiMovesFirst: !settings.aiMovesFirst });
+  }, [settings.aiMovesFirst, updateSettings]);
 
   return (
     <div className="pointer-events-auto fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -113,37 +117,71 @@ export function Settings() {
           </select>
         </div>
 
-        {/* First Player (for AI mode) */}
+        {/* Your Symbol (X or O) */}
         <div className="mb-6">
           <label className="block text-white font-medium mb-2">
-            First Player (vs AI)
+            Your Symbol
           </label>
           <div className="flex gap-2">
             <button
-              onClick={() => handleFirstPlayerChange('X')}
+              onClick={() => handleHumanPlayerChange('X')}
               className={`
                 flex-1 rounded-lg px-4 py-3 font-semibold transition-all
-                ${settings.firstPlayer === 'X'
+                ${settings.humanPlayer === 'X'
                   ? 'bg-[var(--color-cyan)] text-black shadow-[0_0_15px_rgba(0,228,228,0.4)]'
                   : 'bg-[var(--color-background)] text-white border border-white/20 hover:border-white/40'
                 }
               `}
             >
-              X (You First)
+              X
             </button>
             <button
-              onClick={() => handleFirstPlayerChange('O')}
+              onClick={() => handleHumanPlayerChange('O')}
               className={`
                 flex-1 rounded-lg px-4 py-3 font-semibold transition-all
-                ${settings.firstPlayer === 'O'
+                ${settings.humanPlayer === 'O'
                   ? 'bg-[var(--color-magenta)] text-black shadow-[0_0_15px_rgba(255,0,136,0.4)]'
                   : 'bg-[var(--color-background)] text-white border border-white/20 hover:border-white/40'
                 }
               `}
             >
-              O (AI First)
+              O
             </button>
           </div>
+          <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+            AI will play as {settings.humanPlayer === 'X' ? 'O' : 'X'}
+          </p>
+        </div>
+
+        {/* Who Moves First */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <label className="text-white font-medium">AI Moves First</label>
+            <button
+              onClick={handleAIMovesFirstToggle}
+              className={`
+                relative w-14 h-8 rounded-full transition-colors
+                ${settings.aiMovesFirst ? 'bg-[var(--color-magenta)]' : 'bg-gray-600'}
+              `}
+              role="switch"
+              aria-checked={settings.aiMovesFirst}
+            >
+              <span
+                className={`
+                  absolute top-1 left-1 w-6 h-6 rounded-full bg-white transition-transform
+                  ${settings.aiMovesFirst ? 'translate-x-6' : 'translate-x-0'}
+                `}
+              />
+              <span className="sr-only">
+                {settings.aiMovesFirst ? 'AI moves first' : 'You move first'}
+              </span>
+            </button>
+          </div>
+          <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+            {settings.aiMovesFirst
+              ? `AI (${settings.humanPlayer === 'X' ? 'O' : 'X'}) will make the first move`
+              : `You (${settings.humanPlayer}) will make the first move`}
+          </p>
         </div>
 
         {/* Done button */}

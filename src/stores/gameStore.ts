@@ -26,7 +26,8 @@ import { TOTAL_CELLS } from '@/lib/constants';
 const DEFAULT_SETTINGS: Settings = {
   soundEnabled: true,
   aiDifficulty: 'medium',
-  firstPlayer: 'X',
+  humanPlayer: 'X',
+  aiMovesFirst: false,
 };
 
 // ============================================================================
@@ -60,7 +61,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   startGame: () => {
     const { settings, gameMode } = get();
-    const firstPlayer = gameMode === 'ai' ? settings.firstPlayer : 'X';
+    // In AI mode: determine first player based on aiMovesFirst setting
+    // AI plays the opposite of humanPlayer
+    let firstPlayer: Player = 'X';
+    if (gameMode === 'ai') {
+      const aiPlayer = settings.humanPlayer === 'X' ? 'O' : 'X';
+      firstPlayer = settings.aiMovesFirst ? aiPlayer : settings.humanPlayer;
+    }
 
     set({
       board: Array<CellState>(TOTAL_CELLS).fill('empty'),
@@ -110,7 +117,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   restartGame: () => {
     const { settings, gameMode } = get();
-    const firstPlayer = gameMode === 'ai' ? settings.firstPlayer : 'X';
+    // Same logic as startGame
+    let firstPlayer: Player = 'X';
+    if (gameMode === 'ai') {
+      const aiPlayer = settings.humanPlayer === 'X' ? 'O' : 'X';
+      firstPlayer = settings.aiMovesFirst ? aiPlayer : settings.humanPlayer;
+    }
 
     set({
       board: Array<CellState>(TOTAL_CELLS).fill('empty'),

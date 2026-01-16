@@ -54,8 +54,10 @@ export interface Settings {
   soundEnabled: boolean;
   /** AI difficulty level */
   aiDifficulty: Difficulty;
-  /** Which player goes first in AI mode */
-  firstPlayer: Player;
+  /** Which symbol the human plays (X or O) */
+  humanPlayer: Player;
+  /** Whether AI moves first (true) or human moves first (false) */
+  aiMovesFirst: boolean;
 }
 
 /** Combined store state including settings */

@@ -2,7 +2,8 @@
 
 /**
  * Glowing 3D grid separator lines
- * Creates the classic tic-tac-toe # pattern on each layer
+ * Creates a true 3D tic-tac-toe # pattern with 12 lines (4 per axis)
+ * Lines run parallel to X, Y, and Z axes, intersecting to form a cube outline
  * Uses warm white (~4000K) glowing lines as primary lighting
  * @module components/game/GridLines
  */
@@ -13,8 +14,15 @@ import * as THREE from 'three';
 import { CELL_SPACING, LAYER_SEPARATION, CENTER_OFFSET, COLORS } from '@/lib/constants';
 
 // Grid dimensions
-const GRID_HALF_SIZE = CENTER_OFFSET + CELL_SPACING / 2;
+const GRID_HALF_SIZE_XY = CENTER_OFFSET + CELL_SPACING / 2;
+const GRID_HALF_SIZE_Z = LAYER_SEPARATION + LAYER_SEPARATION / 2;
 const LINE_THICKNESS = 0.04;
+
+// Separator positions (between cells)
+const SEP_XY_1 = -CELL_SPACING / 2;
+const SEP_XY_2 = CELL_SPACING / 2;
+const SEP_Z_1 = -LAYER_SEPARATION / 2;
+const SEP_Z_2 = LAYER_SEPARATION / 2;
 
 interface GridLineData {
   start: [number, number, number];
@@ -60,7 +68,7 @@ function GridGlow({ position }: { position: [number, number, number] }) {
     <pointLight
       position={position}
       color={COLORS.warmWhite}
-      intensity={0.12}
+      intensity={0.15}
       distance={6}
       decay={2}
     />
@@ -69,8 +77,11 @@ function GridGlow({ position }: { position: [number, number, number] }) {
 
 /**
  * GridLines component
- * Creates the classic tic-tac-toe # pattern on each of the 3 layers
- * Total: 12 lines (4 per layer)
+ * Creates a true 3D tic-tac-toe # pattern with 12 lines:
+ * - 4 lines parallel to X-axis
+ * - 4 lines parallel to Y-axis
+ * - 4 lines parallel to Z-axis
+ * Lines intersect at 8 points to form a cube-like structure in the center
  *
  * Performance optimized:
  * - Single useFrame for all 12 lines (instead of 12 separate callbacks)
@@ -81,44 +92,48 @@ export function GridLines() {
   const materialRefs = useRef<(THREE.MeshStandardMaterial | null)[]>([]);
   const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
 
-  // Generate the 12 grid lines with pre-calculated geometry (4 per layer)
+  // Generate the 12 grid lines with pre-calculated geometry (4 per axis)
   const { lines, glowPositions } = useMemo(() => {
     const allLines: GridLineData[] = [];
-    const allGlowPositions: [number, number, number][] = [];
 
-    // Separator positions: lines between cells
-    const sep1 = -CELL_SPACING / 2;
-    const sep2 = CELL_SPACING / 2;
+    // 4 lines parallel to X-axis (running left-right)
+    // At the 4 corners of the YZ separator plane
+    allLines.push(
+      calculateLineData([-GRID_HALF_SIZE_XY, SEP_XY_1, SEP_Z_1], [GRID_HALF_SIZE_XY, SEP_XY_1, SEP_Z_1]),
+      calculateLineData([-GRID_HALF_SIZE_XY, SEP_XY_1, SEP_Z_2], [GRID_HALF_SIZE_XY, SEP_XY_1, SEP_Z_2]),
+      calculateLineData([-GRID_HALF_SIZE_XY, SEP_XY_2, SEP_Z_1], [GRID_HALF_SIZE_XY, SEP_XY_2, SEP_Z_1]),
+      calculateLineData([-GRID_HALF_SIZE_XY, SEP_XY_2, SEP_Z_2], [GRID_HALF_SIZE_XY, SEP_XY_2, SEP_Z_2])
+    );
 
-    // Layer Z positions
-    const layerZPositions = [
-      -LAYER_SEPARATION, // Front layer
-      0,                 // Middle layer
-      LAYER_SEPARATION,  // Back layer
+    // 4 lines parallel to Y-axis (running up-down)
+    // At the 4 corners of the XZ separator plane
+    allLines.push(
+      calculateLineData([SEP_XY_1, -GRID_HALF_SIZE_XY, SEP_Z_1], [SEP_XY_1, GRID_HALF_SIZE_XY, SEP_Z_1]),
+      calculateLineData([SEP_XY_1, -GRID_HALF_SIZE_XY, SEP_Z_2], [SEP_XY_1, GRID_HALF_SIZE_XY, SEP_Z_2]),
+      calculateLineData([SEP_XY_2, -GRID_HALF_SIZE_XY, SEP_Z_1], [SEP_XY_2, GRID_HALF_SIZE_XY, SEP_Z_1]),
+      calculateLineData([SEP_XY_2, -GRID_HALF_SIZE_XY, SEP_Z_2], [SEP_XY_2, GRID_HALF_SIZE_XY, SEP_Z_2])
+    );
+
+    // 4 lines parallel to Z-axis (running front-back)
+    // At the 4 corners of the XY separator plane
+    allLines.push(
+      calculateLineData([SEP_XY_1, SEP_XY_1, -GRID_HALF_SIZE_Z], [SEP_XY_1, SEP_XY_1, GRID_HALF_SIZE_Z]),
+      calculateLineData([SEP_XY_1, SEP_XY_2, -GRID_HALF_SIZE_Z], [SEP_XY_1, SEP_XY_2, GRID_HALF_SIZE_Z]),
+      calculateLineData([SEP_XY_2, SEP_XY_1, -GRID_HALF_SIZE_Z], [SEP_XY_2, SEP_XY_1, GRID_HALF_SIZE_Z]),
+      calculateLineData([SEP_XY_2, SEP_XY_2, -GRID_HALF_SIZE_Z], [SEP_XY_2, SEP_XY_2, GRID_HALF_SIZE_Z])
+    );
+
+    // 8 glow positions at the intersections (corners of the inner cube)
+    const allGlowPositions: [number, number, number][] = [
+      [SEP_XY_1, SEP_XY_1, SEP_Z_1],
+      [SEP_XY_1, SEP_XY_1, SEP_Z_2],
+      [SEP_XY_1, SEP_XY_2, SEP_Z_1],
+      [SEP_XY_1, SEP_XY_2, SEP_Z_2],
+      [SEP_XY_2, SEP_XY_1, SEP_Z_1],
+      [SEP_XY_2, SEP_XY_1, SEP_Z_2],
+      [SEP_XY_2, SEP_XY_2, SEP_Z_1],
+      [SEP_XY_2, SEP_XY_2, SEP_Z_2],
     ];
-
-    // Create # pattern for each layer
-    for (const z of layerZPositions) {
-      // Two horizontal lines (parallel to X axis)
-      allLines.push(
-        calculateLineData([-GRID_HALF_SIZE, sep1, z], [GRID_HALF_SIZE, sep1, z]),
-        calculateLineData([-GRID_HALF_SIZE, sep2, z], [GRID_HALF_SIZE, sep2, z])
-      );
-
-      // Two vertical lines (parallel to Y axis)
-      allLines.push(
-        calculateLineData([sep1, -GRID_HALF_SIZE, z], [sep1, GRID_HALF_SIZE, z]),
-        calculateLineData([sep2, -GRID_HALF_SIZE, z], [sep2, GRID_HALF_SIZE, z])
-      );
-
-      // Glow positions at 4 intersections
-      allGlowPositions.push(
-        [sep1, sep1, z],
-        [sep1, sep2, z],
-        [sep2, sep1, z],
-        [sep2, sep2, z]
-      );
-    }
 
     return { lines: allLines, glowPositions: allGlowPositions };
   }, []);
