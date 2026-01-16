@@ -47,6 +47,9 @@ export function AIController() {
       return;
     }
 
+    // Track if this effect is still mounted (for cleanup during hot reload)
+    let isMounted = true;
+
     // Mark as processing to prevent duplicate calls
     isProcessingRef.current = true;
 
@@ -56,6 +59,9 @@ export function AIController() {
     // Request AI move
     getAIMove(board, aiPlayer, aiDifficulty)
       .then((move) => {
+        // Ignore if component unmounted (hot reload or navigation)
+        if (!isMounted) return;
+
         // Clear thinking state BEFORE making the move
         // (The store rejects moves while isAIThinking is true)
         setAIThinking(false);
@@ -63,12 +69,20 @@ export function AIController() {
         makeMove(move);
       })
       .catch((error) => {
+        // Ignore if component unmounted
+        if (!isMounted) return;
+
         console.error('AI move error:', error);
         setAIThinking(false);
       })
       .finally(() => {
         isProcessingRef.current = false;
       });
+
+    // Cleanup function for hot reload safety
+    return () => {
+      isMounted = false;
+    };
   }, [
     isAITurn,
     board,

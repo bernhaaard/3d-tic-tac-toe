@@ -76,6 +76,7 @@ function findClosestCell(
 
 /**
  * Ghost X preview shown at hovered cell
+ * Uses Y-axis billboard effect to face camera
  */
 function GhostXPreview({
   position,
@@ -86,14 +87,24 @@ function GhostXPreview({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const materialsRef = useRef<THREE.MeshStandardMaterial[]>([]);
+  const { camera } = useThree();
 
   const { cylinderRadius, cylinderLength, segments, rotationAngle } = PIECE_GEOMETRY.x;
   const color = new THREE.Color(COLORS.cyan);
 
   useFrame(() => {
+    // Animate opacity
     const targetOpacity = visible ? ANIMATION_CONFIG.hoverOpacity : 0;
     for (const mat of materialsRef.current) {
       mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, 0.2);
+    }
+
+    // Y-axis billboard effect - rotate only around Y to face camera horizontally
+    if (groupRef.current) {
+      const dx = camera.position.x - position[0];
+      const dz = camera.position.z - position[2];
+      const angle = Math.atan2(dx, dz);
+      groupRef.current.rotation.y = angle;
     }
   });
 
@@ -129,6 +140,7 @@ function GhostXPreview({
 
 /**
  * Ghost O preview shown at hovered cell
+ * Uses Y-axis billboard effect to face camera while staying flat
  */
 function GhostOPreview({
   position,
@@ -139,18 +151,31 @@ function GhostOPreview({
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const { camera } = useThree();
 
   const { torusRadius, tubeRadius, radialSegments, tubularSegments } = PIECE_GEOMETRY.o;
   const color = new THREE.Color(COLORS.magenta);
 
   useFrame(() => {
-    if (!materialRef.current) return;
-    const targetOpacity = visible ? ANIMATION_CONFIG.hoverOpacity : 0;
-    materialRef.current.opacity = THREE.MathUtils.lerp(
-      materialRef.current.opacity,
-      targetOpacity,
-      0.2
-    );
+    // Animate opacity
+    if (materialRef.current) {
+      const targetOpacity = visible ? ANIMATION_CONFIG.hoverOpacity : 0;
+      materialRef.current.opacity = THREE.MathUtils.lerp(
+        materialRef.current.opacity,
+        targetOpacity,
+        0.2
+      );
+    }
+
+    // Y-axis billboard effect - rotate only around Y to face camera horizontally
+    // This keeps the torus flat while rotating to face the viewer
+    if (meshRef.current) {
+      const dx = camera.position.x - position[0];
+      const dz = camera.position.z - position[2];
+      const angle = Math.atan2(dx, dz);
+      // Apply rotation: base rotation to lay flat + Y rotation to face camera
+      meshRef.current.rotation.set(Math.PI / 2, 0, angle);
+    }
   });
 
   useEffect(() => {
