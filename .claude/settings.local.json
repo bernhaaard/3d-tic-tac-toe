@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:brainstorming)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:medium.com)",
+      "Bash(claude mcp add mcp-three -- npx -y @basementstudio/mcp-three)",
+      "Bash(claude mcp add:*)",
+      "Bash(claude mcp list:*)",
+      "WebFetch(domain:www.wyzant.com)",
+      "WebFetch(domain:fonts.google.com)",
+      "WebFetch(domain:domwil.co.uk)",
+      "WebFetch(domain:r3f.docs.pmnd.rs)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_run_code"
+    ]
+  }
+}
