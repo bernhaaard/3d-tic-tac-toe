@@ -24,7 +24,7 @@ interface OPieceProps {
  * Uses Y-axis billboard effect (rotates horizontally to face camera while staying flat)
  */
 export function OPiece({ position, isWinning = false }: OPieceProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
 
   // Spring animation for piece appearance
@@ -44,39 +44,40 @@ export function OPiece({ position, isWinning = false }: OPieceProps) {
     config: { duration: ANIMATION_CONFIG.winPulseDuration / 2 },
   });
 
-  // Y-axis billboard effect - rotate only around Y to face camera horizontally
-  // This keeps the torus flat while rotating to face the viewer
+  // Y-axis billboard effect - rotate group around Y to face camera horizontally
+  // The mesh inside has static X rotation to stand upright, group handles Y rotation
   useFrame(() => {
-    if (!meshRef.current) return;
+    if (!groupRef.current) return;
     // Calculate angle to camera on XZ plane
     const dx = camera.position.x - position[0];
     const dz = camera.position.z - position[2];
     const angle = Math.atan2(dx, dz);
-    // Apply rotation: base rotation to lay flat + Y rotation to face camera
-    meshRef.current.rotation.set(Math.PI / 2, 0, angle);
+    groupRef.current.rotation.y = angle;
   });
 
   const { torusRadius, tubeRadius, radialSegments, tubularSegments } = PIECE_GEOMETRY.o;
 
   return (
-    <animated.mesh
-      ref={meshRef}
+    <animated.group
+      ref={groupRef}
       position={position}
       scale={scale}
-      rotation={[Math.PI / 2, 0, 0]}
     >
-      <torusGeometry args={[torusRadius, tubeRadius, radialSegments, tubularSegments]} />
-      <animated.meshStandardMaterial
-        color={COLORS.magenta}
-        metalness={MATERIAL_CONFIG.piece.metalness}
-        roughness={MATERIAL_CONFIG.piece.roughness}
-        emissive={COLORS.magenta}
-        emissiveIntensity={emissiveIntensity}
-        transparent
-        opacity={opacity}
-        toneMapped={false}
-      />
-    </animated.mesh>
+      {/* Mesh rotated on X to stand upright like a coin, group rotates on Y to face camera */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[torusRadius, tubeRadius, radialSegments, tubularSegments]} />
+        <animated.meshStandardMaterial
+          color={COLORS.magenta}
+          metalness={MATERIAL_CONFIG.piece.metalness}
+          roughness={MATERIAL_CONFIG.piece.roughness}
+          emissive={COLORS.magenta}
+          emissiveIntensity={emissiveIntensity}
+          transparent
+          opacity={opacity}
+          toneMapped={false}
+        />
+      </mesh>
+    </animated.group>
   );
 }
 

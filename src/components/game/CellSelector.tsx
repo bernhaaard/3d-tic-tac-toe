@@ -140,7 +140,7 @@ function GhostXPreview({
 
 /**
  * Ghost O preview shown at hovered cell
- * Uses Y-axis billboard effect to face camera while staying flat
+ * Uses Y-axis billboard effect to face camera while staying upright
  */
 function GhostOPreview({
   position,
@@ -149,7 +149,7 @@ function GhostOPreview({
   position: [number, number, number];
   visible: boolean;
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial | null>(null);
   const { camera } = useThree();
 
@@ -167,35 +167,37 @@ function GhostOPreview({
       );
     }
 
-    // Y-axis billboard effect - rotate only around Y to face camera horizontally
-    // This keeps the torus flat while rotating to face the viewer
-    if (meshRef.current) {
+    // Y-axis billboard effect - rotate group around Y to face camera horizontally
+    if (groupRef.current) {
       const dx = camera.position.x - position[0];
       const dz = camera.position.z - position[2];
       const angle = Math.atan2(dx, dz);
-      // Apply rotation: base rotation to lay flat + Y rotation to face camera
-      meshRef.current.rotation.set(Math.PI / 2, 0, angle);
+      groupRef.current.rotation.y = angle;
     }
   });
 
-  useEffect(() => {
-    if (meshRef.current) {
-      materialRef.current = meshRef.current.material as THREE.MeshStandardMaterial;
-    }
-  }, []);
-
   return (
-    <mesh ref={meshRef} position={position} rotation={[Math.PI / 2, 0, 0]} scale={0.8}>
-      <torusGeometry args={[torusRadius, tubeRadius, radialSegments, tubularSegments]} />
-      <meshStandardMaterial
-        color={color}
-        emissive={color}
-        emissiveIntensity={0.2}
-        transparent
-        opacity={0}
-        depthWrite={false}
-      />
-    </mesh>
+    <group ref={groupRef} position={position} scale={0.8}>
+      {/* Mesh rotated on X to stand upright like a coin, group rotates on Y to face camera */}
+      <mesh
+        rotation={[Math.PI / 2, 0, 0]}
+        ref={(mesh) => {
+          if (mesh) {
+            materialRef.current = mesh.material as THREE.MeshStandardMaterial;
+          }
+        }}
+      >
+        <torusGeometry args={[torusRadius, tubeRadius, radialSegments, tubularSegments]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.2}
+          transparent
+          opacity={0}
+          depthWrite={false}
+        />
+      </mesh>
+    </group>
   );
 }
 
