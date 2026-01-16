@@ -3,7 +3,7 @@
 /**
  * X piece 3D geometry component
  * Two crossed cylinders forming an X shape
- * Always faces the camera (billboard effect)
+ * Uses Y-axis billboard effect to face camera while staying upright
  * @module components/game/XPiece
  */
 
@@ -18,13 +18,10 @@ interface XPieceProps {
   isWinning?: boolean;
 }
 
-// Reusable vector for lookAt calculation
-const tempLookAt = new THREE.Vector3();
-
 /**
  * Animated X piece component
  * Appears with spring animation when placed
- * Always faces the camera (billboard effect)
+ * Uses Y-axis billboard effect (rotates horizontally to face camera)
  */
 export function XPiece({ position, isWinning = false }: XPieceProps) {
   const groupRef = useRef<THREE.Group>(null);
@@ -47,12 +44,14 @@ export function XPiece({ position, isWinning = false }: XPieceProps) {
     config: { duration: ANIMATION_CONFIG.winPulseDuration / 2 },
   });
 
-  // Billboard effect - make piece face camera
+  // Y-axis billboard effect - rotate only around Y to face camera horizontally
   useFrame(() => {
     if (!groupRef.current) return;
-    // Get camera position and make the piece look at it
-    tempLookAt.copy(camera.position);
-    groupRef.current.lookAt(tempLookAt);
+    // Calculate angle to camera on XZ plane
+    const dx = camera.position.x - position[0];
+    const dz = camera.position.z - position[2];
+    const angle = Math.atan2(dx, dz);
+    groupRef.current.rotation.y = angle;
   });
 
   const { cylinderRadius, cylinderLength, segments, rotationAngle } = PIECE_GEOMETRY.x;

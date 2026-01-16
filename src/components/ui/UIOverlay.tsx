@@ -10,6 +10,7 @@ import { useGameStore, selectPhase, selectIsSettingsOpen, selectGameMode } from 
 import { MainMenu } from './MainMenu';
 import { GameHUD } from './GameHUD';
 import { GameOver } from './GameOver';
+import { InspectHUD } from './InspectHUD';
 import { Settings } from './Settings';
 import { AIController } from '@/components/game/AIController';
 
@@ -35,6 +36,9 @@ export function UIOverlay() {
 
       {/* Game over screen */}
       {phase === 'gameOver' && <GameOver />}
+
+      {/* Inspect mode HUD */}
+      {phase === 'inspect' && <InspectHUD />}
 
       {/* Settings modal (can appear on any screen) */}
       {isSettingsOpen && <Settings />}

@@ -3,7 +3,7 @@
 /**
  * O piece 3D geometry component
  * Torus (donut shape) forming an O
- * Always faces the camera (billboard effect)
+ * Uses Y-axis billboard effect to stay flat while facing camera
  * @module components/game/OPiece
  */
 
@@ -18,16 +18,13 @@ interface OPieceProps {
   isWinning?: boolean;
 }
 
-// Reusable vector for lookAt calculation
-const tempLookAt = new THREE.Vector3();
-
 /**
  * Animated O piece component
  * Appears with spring animation when placed
- * Always faces the camera (billboard effect)
+ * Uses Y-axis billboard effect (rotates horizontally to face camera while staying flat)
  */
 export function OPiece({ position, isWinning = false }: OPieceProps) {
-  const groupRef = useRef<THREE.Group>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
   const { camera } = useThree();
 
   // Spring animation for piece appearance
@@ -47,36 +44,39 @@ export function OPiece({ position, isWinning = false }: OPieceProps) {
     config: { duration: ANIMATION_CONFIG.winPulseDuration / 2 },
   });
 
-  // Billboard effect - make piece face camera
+  // Y-axis billboard effect - rotate only around Y to face camera horizontally
+  // This keeps the torus flat while rotating to face the viewer
   useFrame(() => {
-    if (!groupRef.current) return;
-    // Get camera position and make the piece look at it
-    tempLookAt.copy(camera.position);
-    groupRef.current.lookAt(tempLookAt);
+    if (!meshRef.current) return;
+    // Calculate angle to camera on XZ plane
+    const dx = camera.position.x - position[0];
+    const dz = camera.position.z - position[2];
+    const angle = Math.atan2(dx, dz);
+    // Apply rotation: base rotation to lay flat + Y rotation to face camera
+    meshRef.current.rotation.set(Math.PI / 2, 0, angle);
   });
 
   const { torusRadius, tubeRadius, radialSegments, tubularSegments } = PIECE_GEOMETRY.o;
 
   return (
-    <animated.group
-      ref={groupRef}
+    <animated.mesh
+      ref={meshRef}
       position={position}
       scale={scale}
+      rotation={[Math.PI / 2, 0, 0]}
     >
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[torusRadius, tubeRadius, radialSegments, tubularSegments]} />
-        <animated.meshStandardMaterial
-          color={COLORS.magenta}
-          metalness={MATERIAL_CONFIG.piece.metalness}
-          roughness={MATERIAL_CONFIG.piece.roughness}
-          emissive={COLORS.magenta}
-          emissiveIntensity={emissiveIntensity}
-          transparent
-          opacity={opacity}
-          toneMapped={false}
-        />
-      </mesh>
-    </animated.group>
+      <torusGeometry args={[torusRadius, tubeRadius, radialSegments, tubularSegments]} />
+      <animated.meshStandardMaterial
+        color={COLORS.magenta}
+        metalness={MATERIAL_CONFIG.piece.metalness}
+        roughness={MATERIAL_CONFIG.piece.roughness}
+        emissive={COLORS.magenta}
+        emissiveIntensity={emissiveIntensity}
+        transparent
+        opacity={opacity}
+        toneMapped={false}
+      />
+    </animated.mesh>
   );
 }
 

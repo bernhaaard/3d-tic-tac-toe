@@ -10,7 +10,7 @@ export type CellState = 'empty' | 'X' | 'O';
 export type Player = 'X' | 'O';
 
 /** Current phase of the game */
-export type GamePhase = 'menu' | 'playing' | 'gameOver';
+export type GamePhase = 'menu' | 'playing' | 'gameOver' | 'inspect';
 
 /** Outcome of a game - winner, draw, or ongoing (null) */
 export type GameOutcome = Player | 'draw' | null;
@@ -82,6 +82,8 @@ export interface GameActions {
   setGameMode: (mode: GameMode) => void;
   /** Set AI thinking state */
   setAIThinking: (thinking: boolean) => void;
+  /** Enter inspect mode to review completed game */
+  enterInspectMode: () => void;
   /** Update settings */
   updateSettings: (settings: Partial<Settings>) => void;
   /** Open the settings panel */

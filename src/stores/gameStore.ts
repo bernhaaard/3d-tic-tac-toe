@@ -150,6 +150,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ isAIThinking: thinking });
   },
 
+  enterInspectMode: () => {
+    const { phase } = get();
+    // Only allow entering inspect mode from game over
+    if (phase === 'gameOver') {
+      set({ phase: 'inspect' });
+    }
+  },
+
   // ============================================================================
   // SETTINGS ACTIONS
   // ============================================================================

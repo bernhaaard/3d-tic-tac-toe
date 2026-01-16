@@ -8,7 +8,7 @@
 
 import { useMemo } from 'react';
 import { useGameStore, selectWinner } from '@/stores/gameStore';
-import { RefreshCw, Home } from 'lucide-react';
+import { RefreshCw, Home, Eye } from 'lucide-react';
 
 /**
  * Game over screen with result and replay options
@@ -17,6 +17,7 @@ export function GameOver() {
   const winner = useGameStore(selectWinner);
   const restartGame = useGameStore((state) => state.restartGame);
   const returnToMenu = useGameStore((state) => state.returnToMenu);
+  const enterInspectMode = useGameStore((state) => state.enterInspectMode);
 
   const { message, color, glowClass } = useMemo(() => {
     if (winner === 'draw') {
@@ -47,9 +48,17 @@ export function GameOver() {
       {/* Action buttons */}
       <div className="flex gap-4">
         <button
+          onClick={enterInspectMode}
+          className="btn btn-secondary py-4 px-8 text-lg flex items-center gap-2"
+          data-first-focus
+        >
+          <Eye className="h-5 w-5" />
+          Inspect Game
+        </button>
+
+        <button
           onClick={restartGame}
           className="btn btn-primary py-4 px-8 text-lg flex items-center gap-2"
-          data-first-focus
         >
           <RefreshCw className="h-5 w-5" />
           Play Again
