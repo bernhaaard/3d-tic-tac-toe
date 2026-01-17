@@ -30,18 +30,18 @@ export function MainMenu() {
   }, [setGameMode, startGame]);
 
   return (
-    <div className="pointer-events-auto h-full grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center px-8 py-12">
-      {/* Left column - Title and info with dark backdrop for readability */}
-      <div className="flex flex-col items-center lg:items-start justify-center lg:pl-8 order-1 lg:order-1">
-        <div className="bg-[var(--color-background)]/90 backdrop-blur-sm rounded-xl p-6 lg:p-8">
+    <div className="pointer-events-auto h-full relative">
+      {/* Left column - Title and info (absolutely positioned on left) */}
+      <div className="absolute left-4 sm:left-8 lg:left-12 top-1/2 -translate-y-1/2 z-10">
+        <div className="bg-[var(--color-background)]/90 backdrop-blur-sm rounded-xl p-6 lg:p-8 max-w-xs">
           <h1
-            className="mb-3 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white text-center lg:text-left"
+            className="mb-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             3D Tic-Tac-Toe
           </h1>
 
-          <p className="mb-4 text-base sm:text-lg text-[var(--color-text-muted)] text-center lg:text-left">
+          <p className="mb-4 text-base sm:text-lg text-[var(--color-text-muted)]">
             A 3×3×3 cubic challenge
           </p>
 
@@ -63,11 +63,8 @@ export function MainMenu() {
         </div>
       </div>
 
-      {/* Center column - Spacer for the 3D grid */}
-      <div className="hidden lg:block w-[400px] h-[400px]" />
-
-      {/* Right column - Action buttons */}
-      <div className="flex flex-col items-center lg:items-end justify-center lg:pr-8 order-2 lg:order-3 mt-8 lg:mt-0">
+      {/* Right column - Action buttons (absolutely positioned on right) */}
+      <div className="absolute right-4 sm:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-10">
         <div className="flex flex-col gap-3 w-64">
           <button
             onClick={handlePvP}

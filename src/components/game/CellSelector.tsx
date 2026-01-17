@@ -99,12 +99,9 @@ function GhostXPreview({
       mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, 0.2);
     }
 
-    // Y-axis billboard effect - rotate only around Y to face camera horizontally
+    // Full billboard effect - always face camera from any angle
     if (groupRef.current) {
-      const dx = camera.position.x - position[0];
-      const dz = camera.position.z - position[2];
-      const angle = Math.atan2(dx, dz);
-      groupRef.current.rotation.y = angle;
+      groupRef.current.quaternion.copy(camera.quaternion);
     }
   });
 
@@ -167,12 +164,9 @@ function GhostOPreview({
       );
     }
 
-    // Y-axis billboard effect - rotate group around Y to face camera horizontally
+    // Full billboard effect - always face camera from any angle
     if (groupRef.current) {
-      const dx = camera.position.x - position[0];
-      const dz = camera.position.z - position[2];
-      const angle = Math.atan2(dx, dz);
-      groupRef.current.rotation.y = angle;
+      groupRef.current.quaternion.copy(camera.quaternion);
     }
   });
 

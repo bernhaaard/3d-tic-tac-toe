@@ -44,15 +44,11 @@ export function OPiece({ position, isWinning = false }: OPieceProps) {
     config: { duration: ANIMATION_CONFIG.winPulseDuration / 2 },
   });
 
-  // Y-axis billboard effect - rotate group around Y to face camera horizontally
-  // The mesh inside has static X rotation to stand upright, group handles Y rotation
+  // Full billboard effect - always face camera from any angle
   useFrame(() => {
     if (!groupRef.current) return;
-    // Calculate angle to camera on XZ plane
-    const dx = camera.position.x - position[0];
-    const dz = camera.position.z - position[2];
-    const angle = Math.atan2(dx, dz);
-    groupRef.current.rotation.y = angle;
+    // Copy camera quaternion to always face the viewer
+    groupRef.current.quaternion.copy(camera.quaternion);
   });
 
   const { torusRadius, tubeRadius, radialSegments, tubularSegments } = PIECE_GEOMETRY.o;
